@@ -1,10 +1,12 @@
 import $ from 'jquery'
 import createReactUnit from './unit.js'
 import createElement from './element'
+import Components from './component'
 const React = {
     render,
     createElement,
-    nextRootIndex: 0
+    nextRootIndex: 0,
+    Components
 }
 
 // 给每个元素添加属性，为了方便获取到这个元素
