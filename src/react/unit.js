@@ -3,7 +3,7 @@ import $ from 'jquery'
 
 class Unit {
     constructor(element) {
-        this.currentElement = element
+        this._currentElement = element
     }
 }
 
@@ -11,8 +11,14 @@ class Unit {
 class ReactTextUnit extends Unit {
     getMarkUp(rootId) { // 保存当前元素id
         this._rootId = rootId
-        const markUp = `${this.currentElement}`
+        const markUp =  `<span data-react_id="${this._rootId}">${this._currentElement}</span>`
         return markUp
+    }
+    update(nextElement) {
+        if(this._currentElement !== nextElement) {
+            this._currentElement = nextElement
+            $(`[data-react_id="${this._rootId}"]`).html(this._currentElement)
+        }
     }
 }
 
@@ -20,7 +26,7 @@ class ReactTextUnit extends Unit {
 class ReactNativeUnit extends Unit {
     getMarkUp(rootId) { // 保存当前元素id
         this._rootId = rootId
-        let {type, props} = this.currentElement
+        let {type, props} = this._currentElement
         let tagStart = `<${type} data-react_id="${this._rootId}"`
         let tagEnd = `</${type}>`
         let contentStr;
@@ -48,33 +54,79 @@ class ReactNativeUnit extends Unit {
                 tagStart += `${propName}=${props[propName]}`
             }
         }
-        console.log(tagStart + '>' + contentStr + tagEnd)
+        // console.log(tagStart + '>' + contentStr + tagEnd)
         return tagStart + '>' + contentStr + tagEnd
     }
 }
 
 // 负责渲染react组件
-class ReactComposeUnit extends Unit {
+class ReactComponentUnit extends Unit {
+    // 这里负责组件的更新操作
+    update(nextElement, partialState) {
+        // 先获取到新的元素
+        this._currentElement = nextElement || this._currentElement
+        // 获取新的状态   不管数据更新与否，状态会改变
+        let nextState = this._componentInstance.state = Object.assign(this._componentInstance.state, partialState)
+        // 新的属性对象
+        let nextProps = this._currentElement.props
+        if(this._componentInstance.shouldComponentUpdate && !this._componentInstance.shouldComponentUpdate(nextProps, nextState)) {
+            return
+        }
+        // 下面要比较变更  看render的返回值是否一样
+        let preRenderedUnitInstance = this._reactComponentUnitInstance // 上次渲染的render
+        // console.log('**********', preRenderedUnitInstance, this)
+        //  得到上次渲染的元素
+        let preRenderedElement = preRenderedUnitInstance._currentElement
+        // 将要渲染的render
+        let nextRenderElement =  this._componentInstance.render()
+        // 如果新旧两个元素类型一样，则可以进行深度比较，如果不一样，则直接干掉老的元素。新建新的
+        if(shouldDeepCompare(preRenderedElement,nextRenderElement)) {
+            // 如果可以进行深比较，则把更新的工作交给撒谎给你次渲染出来的那个element元素对应的unit来处理
+            preRenderedUnitInstance.update(nextRenderElement)
+            this._componentInstance.componentDidUpdate && this._componentInstance.componentDidUpdate()
+        } else {
+            this._renderedUnitInstance = createReactUnit(nextRenderElement)
+            let nextMarkUp = this._renderedUnitInstance.getMarkUp(this._rootId)
+            $(`[data-react_id="${this._rootId}"]`).replaceWith(nextMarkUp)
+        }
+    }
     getMarkUp(rootId) {
         this._rootId = rootId
-        let {type: Component, props} = this.currentElement // 将props和type取出，并将type重命名为component
-        let componentInstance = new Component(props) // type为class,类型为function,此处则可以将props挂载到React.Components原型上
-        componentInstance.componentWillMount && componentInstance.componentWillMount() // 执行生命周期钩子
-
+        let {type: Component, props} = this._currentElement // 将props和type取出，并将type重命名为component
+        let componentInstance = this._componentInstance = new Component(props) // type为class,类型为function,此处则可以将props挂载到React.Components原型上
+        // 让组件的示例的currentUnit属性等于当前的unit
+        componentInstance._currentUnit = this
+        // 执行生命周期钩子
+        componentInstance.componentWillMount && componentInstance.componentWillMount()
+        // 调用组件的render方法，获取要渲染的元素
         let reactComponentRender = componentInstance.render() // class实例上定义了该render方法，获取到render的返回值
-        console.log('22222redner', reactComponentRender)
-        // 将返回值重新递归渲染
-        let reactComposeUnitInstance = createReactUnit(reactComponentRender)
-        // console.log('1111111', reactComposeUnitInstance)
+
+        // 得到这个元素对应的Unit. 将返回值重新递归渲染
+        let reactComposeUnitInstance = this._reactComponentUnitInstance = createReactUnit(reactComponentRender)
+        // console.log('this', this)
+        // 通过Unit可以获得他的html标记
         let markup = reactComposeUnitInstance.getMarkUp(this._rootId)
-        // 先序深度优先  有儿子就进去  树的遍历
+        // 绑定事件 先序深度优先  有儿子就进去  树的遍历
         $(document).on('mounted', () => {
             componentInstance.componentDidMount && componentInstance.componentDidMount()
         })
         return markup
     }
 }
-
+// 判断两个元素的类型是否一样
+function shouldDeepCompare(oldElement, newElement) {
+    if(oldElement !== null && newElement !==null) {
+        let oldType = typeof oldElement
+        let newType = typeof newElement
+        if((oldType === 'string' || oldType === 'number') && (newType === 'string' || newType === 'number')) {
+            return true
+        }
+        if((oldElement instanceof Element) && (newElement instanceof Element)) {
+            return oldElement.type === newElement.type
+        }
+    }
+    return false
+}
 const createReactUnit = function (element) {
     if (typeof element === 'string' || typeof element === 'number') {
         return new ReactTextUnit(element)
@@ -83,7 +135,7 @@ const createReactUnit = function (element) {
         return new ReactNativeUnit(element)
     }
     if (typeof element === 'object' && typeof element.type === 'function') {
-        return new ReactComposeUnit(element)  // element => {type: Counter, props:{name: 'xxx}}
+        return new ReactComponentUnit(element)  // element => {type: Counter, props:{name: 'xxx}}
     }
 }
 export default createReactUnit;

@@ -21,24 +21,35 @@ class Counter extends React.Components {
     }
     componentWillMount() {
         console.log('parent组件被挂载')
-        console.log(this.props)
-        this.setState()
+        // console.log(this.props)
+        // this.setState()
     }
     componentDidMount() {
         console.log('父组件挂载完成')
+        // setInterval(() => {
+        //     console.log('----------------------')
+        //     this.setState({number:this.state.number+1})
+        // }, 1000)
+    }
+    shouldComponentUpdate(nextProps, nextState) {
+        return true
+    }
+    componentDidUpdate() {
+        console.log('数据已更新')
     }
     say = () => {
         console.log('执行say方法')
+        this.setState({number:this.state.number+1})
     }
     render (){
-        // return <SubCounter />
+        // return this.state.number
         return (
             React.createElement("div", {
                 style: {
                     color: 'red',
                     background: 'black'
                 }
-            }, "123123", /*#__PURE__*/React.createElement("p", {className: 'diyText'}, this.props.text), React.createElement("button", {onClick: this.say}, "按钮点击"))
+            }, "123123", React.createElement("p", {className: 'diyText'}, this.props.text), React.createElement("button", {onClick: this.say}, this.state.number))
         )
     }
 }
