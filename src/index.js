@@ -20,12 +20,12 @@ class Counter extends React.Components {
         }
     }
     componentWillMount() {
-        console.log('parent组件被挂载')
+        // console.log('parent组件被挂载')
         // console.log(this.props)
         // this.setState()
     }
     componentDidMount() {
-        console.log('父组件挂载完成')
+        // console.log('父组件挂载完成')
         // setInterval(() => {
         //     console.log('----------------------')
         //     this.setState({number:this.state.number+1})
@@ -54,24 +54,6 @@ class Counter extends React.Components {
     }
 }
 
-
-
-
-// function say() {
-//     console.log('执行了say方法')
-// }
-// const element = React.createElement('div', {name: 'xxx'}, 'hello',React.createElement(
-//     'button', {onClick: say}, '123'
-// ))
-const p = React.createElement("p", null, '这是p标签')
-const btn = React.createElement("button", null, '点击')
-// const element = React.createElement("div", {
-//     style: {
-//         color: 'red',
-//         background: 'black'
-//     }
-// }, "12312312",p, btn )
-// console.log(element) // {type: Counter, props: {name: 'asda', children: ['xx']}
 
 /*
 * 这里的第二个参数即为传递给该组件的值，通过 之后的 new Counter()，会把该属性挂载到React.Component。

@@ -6,7 +6,7 @@ class Element{
 }
 function createElement(type, props, ...children) {
     const currentProp = props || {}
-    currentProp['children'] = children
+    currentProp['children'] = [...children]
     return new Element(type, currentProp)
 }
 // 该方法返回vNode,用对象来描述元素

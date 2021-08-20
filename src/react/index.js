@@ -14,7 +14,7 @@ function render(element, container) {
     // 写一个工厂函数，来创建对应得react元素
     // 通过工厂函数来创建
     let createReactUnitInstance = createReactUnit(element)
-    console.log('createReactUnit生成的实例', createReactUnitInstance)
+    // console.log('createReactUnit生成的实例', createReactUnitInstance)
     const markUp = createReactUnitInstance.getMarkUp(React.nextRootIndex)
     // console.log('result', markUp)
     $(container).html(markUp)
