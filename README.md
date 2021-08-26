@@ -1,11 +1,14 @@
-
 ## 1. 项目基本准备工作
+
 ### 1.1 创建项目
+
 利用`npx create-react-app my_react`命令创建项目
 
 >项目已经放到github：https://github.com/caozhongjie/simple-react.git
 >有什么不对的或者建议或者疑惑，欢迎指出！
+
 ### 1.2 项目结构
+
 将一些用不到的文件删除后，目录变成这样
 
 ![image-20210820155943532](C:\Users\hz21036335\AppData\Roaming\Typora\typora-user-images\image-20210820155943532.png)
@@ -55,6 +58,7 @@ ReactDOM.render(
   document.getElementById('root')
 );
 ```
+
 以这样的方式使用ReactDOM，说明他有render这个方法。
 
 所以我们可以这样实现react-dom
@@ -72,6 +76,7 @@ function render(element,container){
 
 export default ReactDOM
 ```
+
 我们看下运行结果
 
 
@@ -95,29 +100,32 @@ let ReactDOM = {
     rootIndex:0
 }
 function render(element,container){
-    container.innerHTML = `<span data-reactid=${ReactDOM.rootIndex}>${element}</span>`
+    container.innerHTML = `<span data-react_id=${ReactDOM.rootIndex}>${element}</span>`
 }
 
 export default ReactDOM
 ```
 
-如代码所示，我们给每一个元素添加了一个标记`data-reactid`
+如代码所示，我们给每一个元素添加了一个标记`data-react_id`
 
 运行，发现确实标记成功了，哈哈哈
 
 ![image-20210820160447714](C:\Users\hz21036335\AppData\Roaming\Typora\typora-user-images\image-20210820160447714.png)
 
 ## 4. 重构render方法
+
 我们前面的render方法
 ​
+
 ```js
 function render(element,container){
-    container.innerHTML = `<span data-reactid=${ReactDOM.rootIndex}>${element}</span>`
+    container.innerHTML = `<span data-react_id=${ReactDOM.rootIndex}>${element}</span>`
 }
 ```
+
 默认传入的element为字符串， 但是实际情况是有可能是 文本节点，也有可能是DOM节点，也有可能是 自定义组件。
 
-所以我们实现一个createReactUnit方法，将element传入，让它来判断element是什么类型的节点，。然后再返回一个被判断为某种类型，并且添加了对应的方法和属性的对象 。例如，我们的element是字符串类型，那么就返回一个字符串类型的对象，而这个对象自身有element 属性和getMarkUp方法，这个getMarkUp方法，将element转化成真实的dom
+所以我们实现一个createReactUnit方法，将element传入，让它来判断element是什么类型的节点，。根据不同的数据类型来执行不同的渲染逻辑，并且添加对应的方法和属性的对象 。例如，我们的element是字符串类型，那么就返回一个字符串类型的对象，而这个对象自身有element 属性和getMarkUp方法，这个getMarkUp方法，将element转化成真实的dom
 
 **其实你也可以简单地认为createReactUnit 方法 就是 为 element 对象添加 一个getMarkUp方法**
 
@@ -129,15 +137,17 @@ let ReactDOM = {
     rootIndex:0
 }
 function render(element,container){
-    let unit = createUnit(element)
+    let unit = createReactUnit(element)
     let markUp = unit.getMarkUp();// 用来返回HTML标记
     $(container).html(markUp)
 }
 ​
 export default ReactDOM
 ```
+
 如代码所示，将element传入createUnit方法，获得的unit是一个对象
 ​
+
 ```js
 {
   _currentElement:element,
@@ -151,6 +161,7 @@ export default ReactDOM
 
 注意，如果传入render的element是字符串"sunny"，
 即
+
 ```js
 import React from './react';
 import ReactDOM from './react-dom';
@@ -161,6 +172,7 @@ ReactDOM.render(
 );
 
 ```
+
 也就是说传入createUnit的element是字符串"sunny"，那么返回的unit是
 
 ```javascript
@@ -177,9 +189,11 @@ ReactDOM.render(
 ​
 
 ## 5. 实现createReactUnit方法
+
 我们创建一个新的文件叫做unit.js
 
 ![image-20210820160907798](C:\Users\hz21036335\AppData\Roaming\Typora\typora-user-images\image-20210820160907798.png)
+
 ```js
 // Unit.js
 class Unit{
@@ -191,7 +205,7 @@ class ReactTextUnit extends Unit{
 
 function createReactUnit(element){
     if(typeof element === 'string' || typeof element === "number"){
-        return new TextUnit(element)
+        return new ReactTextUnit(element)
     }
 }
 
@@ -236,7 +250,7 @@ class Unit{
 到这一步，我们只要重写getMarkUp方法就好了，不过不要忘记，给每一个元素添加一个 reactid,至于为什么，已经在上面说过了，也放了一张大图了哈。
 
 ```js
-class TextUnit extends Unit{
+class ReactTextUnit extends Unit{
     getMarkUp(rootId) { // 保存当前元素id
         this._rootId = rootId
         const markUp = `<span data-react_id="${this._rootId}">${this._currentElement}</span>`
@@ -254,10 +268,10 @@ class Unit{
         this._currentElement = element
     }
 }
-class TextUnit extends Unit{
+class ReactTextUnit extends Unit{
     getMarkUp(reactid){
         this._reactid = reactid
-        return `<span data-reactid=${reactid}>${this._currentElement}</span>`
+        return `<span data-react_id=${reactid}>${this._currentElement}</span>`
     }
 }
 
@@ -271,6 +285,7 @@ export createReactUnit;
 ```
 
 我们在react/index.js引入 unit测试下
+
 ```js
 // index.js
 import React from './react';
@@ -306,6 +321,7 @@ export default ReactDOM
 渲染成功
 
 ## 8. 理解React.creacteElement方法
+
 在第一次学习react的时候，我总会带着许多疑问。比如看到下面的代码就会想：为什么我们只是引入了React,但是并没有明显的看到我们在其他地方用，这时我就会想着既然没有用到，那如果删除之后会不会受到影响呢？答案当然是不行的。
 
 ```javascript
@@ -323,6 +339,7 @@ console.log({type: element.type, props:element.props})
 
 ReactDOM.render(element,document.getElementById('root'));
 ```
+
 当我们带着这个问题去研究的时候会发现其实在渲染element的时候调了**React.createElement()**，所以上面的问题就在这里找到了答案。
 
 如下面代码所示，这就是从jsx语法到React.createElement的转化
@@ -380,18 +397,20 @@ var ul = React.createElement('ul', {className: 'list'}, li1, li2, li3);
 console.log(ul);
 ReactDOM.render(ul,document.getElementById('root'))
 ```
+
 可以就看下 ul 最终的打印 期待结果 
 ![在这里插入图片描述](https://img-blog.csdnimg.cn/20201119170622291.png#pic_center)
 
 
 
-由此 ，我们只知道了，ReactElement.createElement方法将生产一个**给定类型的ReactElement元素**，然后这个对象被传入 render方法，然后进行了上面讲到的 createUnit和getMarkUp操作。
+由此 ，我们只知道了，React.createElement方法将生产一个**给定类型的ReactElement元素**，也就是Vnode。然后这个对象被传入 render方法，然后进行了上面讲到的 createUnit和getMarkUp操作。
 
 ## 9. 实现React.createElement方法
+
 经过上面的讲解，我们大概已经知道React.createElement方法的作用了，现在就来看看是怎么实现的
 
 ![在这里插入图片描述](https://img-blog.csdnimg.cn/20201119155241666.png#pic_center)
-我们创建了一个新的文件element.js
+我们创建了一个新的文件element.js（目的是为了学习react的构建，不包括vnode的生成)
 
 ```javascript
 // element.js
@@ -409,6 +428,7 @@ function createElement(type, props, ...children) {
 // 该方法返回vNode,用对象来描述元素
 export default createElement;
 ```
+
 我们 定义了一个 Element 类 ，然后在createElement方法里创建了这个类的对象，
 并且return出去了
 
@@ -432,6 +452,7 @@ export default createElement;
 ```
 
 ## 10. 实现ReactNativeUnit
+
 上面实现了 createElement返回 给定类型的ReactElement元素 后，就将改元素传入，render方法，因此 就会经过 createReactUnit方法， createReactUnit方法判断是属于什么类型的 元素，如下面代码
 
 ```javascript
@@ -444,11 +465,12 @@ class Unit {
 class TextUnit extends Unit{
     getMarkUp(reactid){
         this._reactid = reactid
-        return `<span data-reactid=${reactid}>${this._currentElement}</span>`
+        return `<span data-react_id=${reactid}>${this._currentElement}</span>`
     }
 }
 
 function createReactUnit(element){
+    // 
     if(typeof element === 'string' || typeof element === "number"){
         return new TextUnit(element)
     }
@@ -471,6 +493,7 @@ class ReactNativeUnit extends Unit{
     }
 }
 ```
+
 要明确的一点是，ReactNativeUnit的getMarkUp方法，是要把
 ![在这里插入图片描述](https://img-blog.csdnimg.cn/20201119171350921.png#pic_center)
 这样一个element 对象转化为 真实的dom的
@@ -478,7 +501,7 @@ class ReactNativeUnit extends Unit{
 因此，我们可以这样完善getMarkUp方法
 
 ```javascript
-class NativeUnit extends Unit{
+class ReactNativeUnit extends Unit{
     getMarkUp(reactid){
         this._reactid = reactid 
         let {type,props} = this._currentElement;
@@ -502,6 +525,7 @@ class NativeUnit extends Unit{
     }
 }
 ```
+
 这只是 大体上的 一个实现 ，其实就是 把标签 和属性 以及 子元素 拼接成 字符串，然后返回出去。
 
 我们测试下，现在有没有 把ul 渲染出来
@@ -518,6 +542,7 @@ var ul = React.createElement('ul', {className: 'list'}, li1, li2, li3);
 console.log(ul);
 ReactDOM.render(ul,document.getElementById('root'))
 ```
+
 ![在这里插入图片描述](https://img-blog.csdnimg.cn/20201119174610269.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3dlaXhpbl80Mzk2NDE0OA==,size_16,color_FFFFFF,t_70#pic_center)
 发现确实成功渲染出来了，但是 属性和 子元素还没有，这是因为我们 还没实现 具体 的功能。
 
@@ -528,14 +553,14 @@ class NativeUnit extends Unit{
     getMarkUp(reactid){
         this._reactid = reactid 
         let {type,props} = this._currentElement;
-        let tagStart = `<${type} data-reactid="${this._reactid}"`
+        let tagStart = `<${type} data-react_id="${this._reactid}"`
         let childString = ''
         let tagEnd = `</${type}>`
         for(let propName in props){
         	// 新增代码
             if(/^on[A-Z]/.test(propName)){ // 添加绑定事件
                 let eventName = propName.slice(2).toLowerCase(); // 获取click
-                $(document).delegate(`[data-reactid="${this._reactid}"]`,`${eventName}.${this._reactid}`,props[propName])
+                $(document).delegate(`[data-react_id="${this._reactid}"]`,`${eventName}.${this._reactid}`,props[propName])
             }else if(propName === 'style'){ // 如果是一个样式对象
                
             }else if(propName === 'className'){ // 如果是一个类名
@@ -550,6 +575,7 @@ class NativeUnit extends Unit{
     }
 }
 ```
+
 在这里，我们是用了事件代理的模式，之所以用事件代理，是因为这些标签元素还没被渲染到页面上，但我们又必须提前绑定事件，所以需要用到事件代理
 
 接下来，实现 样式对象的绑定
@@ -559,7 +585,7 @@ class ReactNativeUnit extends Unit{
     getMarkUp(reactid){
         this._reactid = reactid 
         let {type,props} = this._currentElement;
-        let tagStart = `<${type} data-reactid="${this._reactid}"`
+        let tagStart = `<${type} data-react_id="${this._reactid}"`
         let childString = ''
         let tagEnd = `</${type}>`
         for(let propName in props){
@@ -589,6 +615,7 @@ class ReactNativeUnit extends Unit{
 ```javascript
 {style:{backgroundColor:"red"}}
 ```
+
 对象中的 style这个对象 属性拿出来，
 
 然后把**backgroundColor** 通过正则 变化成**background-color**，
@@ -599,11 +626,11 @@ class ReactNativeUnit extends Unit{
 接下来再实现className，发现这个也太简单了吧
 
 ```javascript
-class NativeUnit extends Unit {
+class ReactNativeUnit extends Unit {
     getMarkUp(reactid) {
         this._reactid = reactid
         let { type, props } = this._currentElement;
-        let tagStart = `<${type} data-reactid="${this._reactid}"`
+        let tagStart = `<${type} data-react_id="${this._reactid}"`
         let childString = ''
         let tagEnd = `</${type}>`
         for (let propName in props) {
@@ -623,20 +650,23 @@ class NativeUnit extends Unit {
     }
 }
 ```
+
 为什么这么简单呢？ 因为只需要把
+
 ```javascript
 className: 'list'
 ```
+
 中的className变化成 class就可以了。OMG！！
 
 接下来，是时候实现子元素的拼接了哈
 
 ```javascript
-class NativeUnit extends Unit {
+class ReactNativeUnit extends Unit {
     getMarkUp(reactid) {
         this._reactid = reactid
         let { type, props } = this._currentElement;
-        let tagStart = `<${type} data-reactid="${this._reactid}"`
+        let tagStart = `<${type} data-react_id="${this._reactid}"`
         let childString = ''
         let tagEnd = `</${type}>`
         for (let propName in props) {
@@ -662,16 +692,16 @@ class NativeUnit extends Unit {
 }
 ```
 
-发现子元素 ，其实只要进行递归操作，也就是将子元素传进createUnit，把返回的childUnit 通过childMarkUp 方法变成 真实动，再拼接到childString 就好了。 其实想想也挺简单，就类似深拷贝的操作。
+发现子元素 ，其实只要进行递归操作，也就是将子元素传进createUnit，把返回的childUnit 通过getMarkUp方法变成 真实DOM，再拼接到childString 就好了。 其实想想也挺简单，递归深度优先。
 
 好了，接下来就是 其他属性了
 
 ```javascript
-class NativeUnit extends Unit {
+class ReactNativeUnit extends Unit {
     getMarkUp(reactid) {
         this._reactid = reactid
         let { type, props } = this._currentElement;
-        let tagStart = `<${type} data-reactid="${this._reactid}"`
+        let tagStart = `<${type} data-react_id="${this._reactid}"`
         let childString = ''
         let tagEnd = `</${type}>`
         for (let propName in props) {
@@ -691,15 +721,17 @@ class NativeUnit extends Unit {
     }
 }
 ```
+
 其他属性直接就拼上去就好了哈哈哈
 
 
 
-好了。现在我们已经完成了ReactNativeUini的getMarkUp方法。我们来测试一下是否成功了没有吧！
+好了。现在我们已经完成了ReactNativeUnit的getMarkUp方法。我们来测试一下是否成功了没有吧！
 ![在这里插入图片描述](https://img-blog.csdnimg.cn/20201120142936634.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3dlaXhpbl80Mzk2NDE0OA==,size_16,color_FFFFFF,t_70#pic_center)
 害，不出所料地成功了。
 
 ## 11. 完成React.Component
+
 接下来我们看看自定义组件是怎么被渲染的，例如下面的Counter组件
 
 ```javascript
@@ -733,17 +765,15 @@ class Component{
     }
 }
 
-export {
-    Component
-}
+export default Component
 ```
 
 然后再引入react中即可
 
 ```javascript
  // react.js
- import {createElement} from "./element"
- import {Component} from "./component"
+ import createElement from "./element"
+ import Component from "./component"
  const React = {
     createElement,
     Component
@@ -752,9 +782,10 @@ export {
 ```
 
 跟 处理ReactNativeUnit一样，先通过createReactUnit判断element是属于什么类型，如果是自定义组件就 return  ReactComponentUnit()
+
 ```javascript
 // Unit.js
-import { Element } from "./element" // 新增代码
+import Element from "./element" // 新增代码
 import $ from "jquery"
 class Unit {
     constructor(element) {
@@ -764,20 +795,20 @@ class Unit {
         throw Error("此方法应该被重写，不能直接被使用")
     }
 }
-class TextUnit extends Unit {
+class ReactTextUnit extends Unit {
     
 }
 
-class NativeUnit extends Unit {
+class ReactNativeUnit extends Unit {
    
 }
 
-function createUnit(element) {
+function CreateUnit(element) {
     if (typeof element === 'string' || typeof element === "number") {
-        return new TextUnit(element)
+        return new ReactTextUnit(element)
     }
     if (element instanceof Element && typeof element.type === "string") {
-        return new NativeUnit(element)
+        return new ReactNativeUnit(element)
     }
     // 新增代码
     if(element instanceof Element && typeof element.type === 'function'){
@@ -787,9 +818,7 @@ function createUnit(element) {
 }
 
 
-export {
-    createUnit
-}
+export default CreateUnit
 ```
 
 为什么是用 ```typeof element.type === 'function'```来判断 呢？ 因为Counter是 一个类，而类在js中的本质就是function
@@ -802,8 +831,9 @@ class ReactComponentUnit extends Unit{
     getMarkUp(reactid){
       this._rootId = rootId
       let {type:Component,props} = this._currentElement // 实际上，在例子中type === Counter
-      let componentInstance = new Component(props);
-      let reactComponentRender = componentInstance.render()
+      let componentInstance = new Component(props); // 获取class（即组件）实例
+      let reactComponentRender = componentInstance.render() // 获取组件render数据
+      // render返回的数据执行createReactUnit
       let reactComposeUnitInstance = createReactUnit(reactComponentRender)
       let markup = reactComposeUnitInstance.getMarkUp(this._rootId)
       return markup
@@ -858,11 +888,13 @@ ReactDOM.render(element,document.getElementById('root'))
 ```javascript
 let renderUnit = createReactUnit(reactComponentRender);
 ```
+
 之前，我们是在处理自定义组件Counter。
 
 而到了 
+
 ```javascript
-let renderUnit = createReactUnit(renderElement);
+let renderUnit = createReactUnit(reactComponentRender);
 ```
 
 这一步，其实就是在处理ReactNativeUnit。（细思极恐。。）
@@ -871,6 +903,7 @@ let renderUnit = createReactUnit(renderElement);
 发现确实成功了。
 
 ## 12. 实现 componentWillMount
+
 我们在之前的例子上添加个componentWillMount 生命周期函数吧
 
 ```javascript
@@ -949,6 +982,7 @@ class CompositeUnit extends Unit{
     }
 }
 ```
+
 然后 再在 把组件的dom挂载到 页面上后再触发这个 mounted事件
 
 ```javascript
@@ -1016,13 +1050,14 @@ class ReactComponentUnit extends Unit{
 我们为这个 ReactComponentUnit的实例添加了
 
 1. _componentInstance ：用了表示 当前组件的实例 （我们所写的Counter组件）
-2.  _reactComponentUnitInstance： 当前组件的render,用于之后对比新旧render出来的结果的变化
+2. _reactComponentUnitInstance： 当前组件的render,用于之后对比新旧render出来的结果的变化
 
 另外，我们也通过
 
 ```javascript
 componentInstance._currentUnit = this // 把 unit 挂到 实例componentInstance 
 ```
+
 把当前 的unit 挂载到了 组件实例componentInstance身上。
 
 **可见 组件的实例保存了 当前 unit，当前的unit也保存了组件实例**
@@ -1030,7 +1065,9 @@ componentInstance._currentUnit = this // 把 unit 挂到 实例componentInstance
 
 
 ## 14. 实现setState
+
 我们看下面的例子，每隔一秒钟就number+1
+
 ```javascript
 // index.js
 import React from './react';
@@ -1098,6 +1135,7 @@ class ReactComponentUnit extends Unit{
     }
 }
 ```
+
 我们首先 更换了_currentElement的值，这里为什么会有 有或者没有nextElement的情况呢？
 
 （主要就是因为，如果 _currentElement  是 字符串或者数字的话，那么它就需要 传nextElement 来替换掉旧的 _currentElement  。而如果不是字符串或者数字的话，是不需要传的。而ReactComponentUnit必定是组件的，所以不用传nextElement ）。
@@ -1107,6 +1145,7 @@ class ReactComponentUnit extends Unit{
 ```javascript
  let nextState = this._componentInstance.state = Object.assign(this._componentInstance.state,partialState);
 ```
+
 获取 最新的 props跟获取state的方式不一样，props是跟_currentElement  绑定在一起的，所以获取最新的props是通过
 
 ```javascript
@@ -1148,9 +1187,10 @@ class ReactComponentUnit extends Unit{
 
 我们首先会判断要不要进行深度比较。
 
-如果不是进行深度比较就非常简单
+如果不用进行深度比较就非常简单
 
 直接获取新的渲染unit，然后通过getMarkUp获得要渲染的dom，接着就把当前的组件里的dom元素替换掉
+
 ```javascript
 class ReactComponentUnit extends Unit{
     update(nextElement,partialState){
@@ -1171,7 +1211,7 @@ class ReactComponentUnit extends Unit{
         let nextRenderElement = this._componentInstance.render()
         // 如果新旧两个元素类型一样，则可以进行深度比较，如果不一样，则直接干掉老的元素。新建新的
         if (shouldDeepCompare(preRenderedElement, nextRenderElement)) {
-            // 如果可以进行深比较，则把更新的工作交给撒谎给你次渲染出来的那个element元素对应的unit来处理
+            // 如果可以进行深比较，则把更新的工作交给上次渲染出来的那个element元素对应的unit来处理
             preRenderedUnitInstance.update(nextRenderElement)
             this._componentInstance.componentDidUpdate && this._componentInstance.componentDidUpdate()
         } else {
@@ -1216,7 +1256,7 @@ class ReactComponentUnit extends Unit{
         }else{
             this._renderUnit = createUnit(nextRenderElement)
             let nextMarkUp = this._renderUnit.getMarkUp(this._reactid)
-            $(`[data-reactid="${this._reactid}"]`).replaceWith(nextMarkUp)
+            $(`[data-react_id="${this._reactid}"]`).replaceWith(nextMarkUp)
         }
 
     }
@@ -1225,6 +1265,7 @@ class ReactComponentUnit extends Unit{
     }
 }
 ```
+
 ![在这里插入图片描述](https://img-blog.csdnimg.cn/20201121164429884.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3dlaXhpbl80Mzk2NDE0OA==,size_16,color_FFFFFF,t_70#pic_center)
 
 发现确实成功了。
@@ -1292,11 +1333,13 @@ class ReactComponentUnit extends Unit {
     }
 }
 ```
+
 如果可以深度，就执行
 
 ```javascript
  preRenderedUnitInstance.update(nextRenderElement)
 ```
+
 这是什么意思？
 
 我们当前是在执行渲染Counter的话，那preRenderedUnitInstance 是什么呢？
@@ -1330,6 +1373,7 @@ class ReactTextUnit extends Unit {
     }
 }
 ```
+
 ReactTextUnit 的update方法非常简单，先判断 渲染内容有没有变化，有的话就 替换点字符串的内容
 
 并把当前unit 的_currentElement  替换成最新的nextElement
@@ -1346,6 +1390,7 @@ function shouldDeepCompare(){
 一如既往成功
 
 ## 15. 实现shouldComponentUpdate方法
+
 我们知道有个shouldComponentUpdate，用来决定要不要 重渲染 该组件的
 
 ```javascript
@@ -1353,6 +1398,7 @@ shouldComponentUpdate(nextProps, nextState) {
   return nextState.someData !== this.state.someData
 }
 ```
+
 显然，它要我们传入 两个参数，分别是 组件更新后的nextProps和nextState
 
 而在 还是上面，实现 update的过程中，我们已经得到了nextState 和nextProps 
@@ -1443,11 +1489,13 @@ class ReactComponentUnit extends Unit{
 ```
 
 ## 17. 实现shouDeepCompare
+
 判断是否需要深比较极其简单，只需要判断 oldElement 和newElement 是否 都是字符串或者数字，这种类型的就走深比较
 
 接着判断 oldElement 和newElement 是否 都是 Element类型，不是的话就return false，是的 再判断 type是否相同（即判断是否是同个组件，是的话 return true）
 
 其他情况都return false
+
 ```javascript
 function shouldDeepCompare(oldElement,newElement){
     if(oldElement != null && newElement != null){
