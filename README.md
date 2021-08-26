@@ -5,7 +5,8 @@
 利用`npx create-react-app my_react`命令创建项目
 
 >项目已经放到github：https://github.com/caozhongjie/simple-react.git
->有什么不对的或者建议或者疑惑，欢迎指出！
+>https://www.cnblogs.com/cazj/p/15190651.html博客地址
+>！！！在仓库代码中，将 react-dom.js 和 react.js 合并为了 src/react/index.js
 
 ### 1.2 项目结构
 
